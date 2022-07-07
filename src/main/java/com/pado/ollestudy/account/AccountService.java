@@ -4,6 +4,7 @@ import com.pado.ollestudy.domain.Account;
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.validation.Valid;
@@ -16,12 +17,14 @@ public class AccountService {
     // 우선 consoleMailSender를 주입받음
     private final JavaMailSender javaMailSender;
 
+    private final PasswordEncoder passwordEncoder;
+
     // signup 코드 빌더 별도의 메소드로 분리. 리팩토링하여 컨트롤러 메소드 내 코드 줄이기.
     private Account saveNewAccount(@Valid SignUpForm signUpForm) {
         Account account = Account.builder()
                 .email(signUpForm.getEmail())
                 .nickname((signUpForm.getNickname()))
-                .password(signUpForm.getPassword()) // todo: encoding 해야함
+                .password(passwordEncoder.encode(signUpForm.getPassword()))// encoder 적용
                 .studyCreatedByWeb(true)
                 .studyUpdatedByWeb(true)
                 .studyEnrollmentResultByWeb(true)
