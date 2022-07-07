@@ -1,6 +1,9 @@
 package com.pado.ollestudy.account;
 
+import com.pado.ollestudy.domain.Account;
 import lombok.RequiredArgsConstructor;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.Errors;
@@ -14,6 +17,10 @@ import javax.validation.Valid;
 public class AccountController {
 
     private final SignUpFormValidator signUpFormValidator;
+    private final AccountRepository accountRepository;
+
+    // 우선 consoleMailSender를 주입받음
+    private final JavaMailSender javaMailSender;
 
     // validator를 initbinder에 추가해놓으면
     // signUpForm을 받을 때 Bean validator 303 검증도 하고, InitBinder내 SignUpFormValidator도 자동 수행됨
@@ -43,7 +50,29 @@ public class AccountController {
         // initBinder 덕분에 생략 가능
         // signUpFormValidator.validate(signUpForm, errors);
 
-        //todo: 회원가입 처리
+        Account account = Account.builder()
+                .email(signUpForm.getEmail())
+                .nickname((signUpForm.getNickname()))
+                .password(signUpForm.getPassword()) // todo: encoding 해야함
+                .studyCreatedByWeb(true)
+                .studyUpdatedByWeb(true)
+                .studyEnrollmentResultByWeb(true)
+                .build();
+
+        // 회원 저장
+        Account newAccount = accountRepository.save(account);
+
+        // 메일을 인증하는 토큰값 생성
+        newAccount.generateEmailCheckToken();
+
+        // 가입 완료 후 이메일 보내기. mail sender library 사용. 기본설정은 저장되어있음
+        SimpleMailMessage mailMessage = new SimpleMailMessage();
+        mailMessage.setTo(newAccount.getEmail()); // 받는사람 메일
+        mailMessage.setSubject("메일 제목입니다. 스터디 올레 회원가입 인증");
+        mailMessage.setText("/check-email-token?token=" + newAccount.getEmailCheckToken() +
+                "&email=" + newAccount.getEmail());
+
+        javaMailSender.send(mailMessage);
 
         return "redirect:/";
     }
