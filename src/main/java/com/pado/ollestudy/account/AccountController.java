@@ -17,10 +17,7 @@ import javax.validation.Valid;
 public class AccountController {
 
     private final SignUpFormValidator signUpFormValidator;
-    private final AccountRepository accountRepository;
-
-    // 우선 consoleMailSender를 주입받음
-    private final JavaMailSender javaMailSender;
+    private final AccountService accountService;
 
     // validator를 initbinder에 추가해놓으면
     // signUpForm을 받을 때 Bean validator 303 검증도 하고, InitBinder내 SignUpFormValidator도 자동 수행됨
@@ -47,34 +44,15 @@ public class AccountController {
             return "account/sign-up"; // 실패시 다시 폼을 보여줌
         }
 
-        // initBinder 덕분에 생략 가능
+        // initBinder 덕분에 아래 코드 생략 가능
         // signUpFormValidator.validate(signUpForm, errors);
 
-        Account account = Account.builder()
-                .email(signUpForm.getEmail())
-                .nickname((signUpForm.getNickname()))
-                .password(signUpForm.getPassword()) // todo: encoding 해야함
-                .studyCreatedByWeb(true)
-                .studyUpdatedByWeb(true)
-                .studyEnrollmentResultByWeb(true)
-                .build();
-
-        // 회원 저장
-        Account newAccount = accountRepository.save(account);
-
-        // 메일을 인증하는 토큰값 생성
-        newAccount.generateEmailCheckToken();
-
-        // 가입 완료 후 이메일 보내기. mail sender library 사용. 기본설정은 저장되어있음
-        SimpleMailMessage mailMessage = new SimpleMailMessage();
-        mailMessage.setTo(newAccount.getEmail()); // 받는사람 메일
-        mailMessage.setSubject("메일 제목입니다. 스터디 올레 회원가입 인증");
-        mailMessage.setText("/check-email-token?token=" + newAccount.getEmailCheckToken() +
-                "&email=" + newAccount.getEmail());
-
-        javaMailSender.send(mailMessage);
+        // 회원 가입 프로세스 (회원 가입정보 저장, 이메일 보내기)
+        // 컨트롤러는 새 회원을 처리하는 서비스만 호출하고, 서비스에서 이메일 보내는처리. 컨트롤러는 알 필요 없다.
+        accountService.processNewAccount(signUpForm);
 
         return "redirect:/";
     }
+
 
 }
