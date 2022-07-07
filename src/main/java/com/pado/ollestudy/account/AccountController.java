@@ -11,6 +11,7 @@ import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.time.LocalDateTime;
 
 @Controller
 @RequiredArgsConstructor
@@ -19,13 +20,14 @@ public class AccountController {
     private final SignUpFormValidator signUpFormValidator;
     private final AccountService accountService;
 
+    private final AccountRepository accountRepository;
+
     // validator를 initbinder에 추가해놓으면
     // signUpForm을 받을 때 Bean validator 303 검증도 하고, InitBinder내 SignUpFormValidator도 자동 수행됨
     @InitBinder("signUpForm")
     public void initBinder(WebDataBinder webDataBinder) {
         webDataBinder.addValidators(signUpFormValidator);
     }
-
     @GetMapping("/sign-up")
     public String signupForm(Model model){
 
@@ -54,5 +56,36 @@ public class AccountController {
         return "redirect:/";
     }
 
+    // 사용자가 mailMessage.setText("/check-email-token?token=" + newAccount.getEmailCheckToken() +"&email=" + newAccount.getEmail());
+    // 위 주소로 입력한 링크가 메일주소, 토큰값과 맞는지 확인하는 컨트롤러
+    @GetMapping("/check-email-token")
+    public String checkEmailToken(String token, String email, Model model) {
+
+        String view = "account/checked-email";
+
+        // 메일주소 존재하는지 확인
+        Account account = accountRepository.findByEmail(email);
+
+        if(account == null){
+            model.addAttribute("error", "wrong.email");
+            return view;
+        }
+
+        // 토큰이 유효한지 확인
+        if(!account.getEmailCheckToken().equals(token)){
+            model.addAttribute("error", "wrong.token");
+            return view;
+        }
+
+        // 여기까지 얼리리턴 완료시 정상적으로 인증된 회원임
+        account.setEmailVerified(true); // 인증 정상 state로 처리
+        account.setJoinedAt(LocalDateTime.now());
+
+        // 뷰에 넘길 회원 수, 닉네임
+        model.addAttribute("numberOfUser", accountRepository.count());
+        model.addAttribute("nickname", account.getNickname());
+
+        return view;
+    }
 
 }

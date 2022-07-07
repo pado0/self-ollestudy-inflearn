@@ -73,7 +73,7 @@ class AccountControllerTest {
         Account account = accountRepository.findByEmail("bgshhd95@gmail.com");
         assertNotNull(account); // 가입한 메일 값이 존재하는지 확인
         assertNotEquals(account.getPassword(), "12345678"); // 입력한 패스워드랑 달라졌는지 (인코딩이 되었는지) 확인
-        assertTrue(accountRepository.existsByEmail("bgshhd95@gmail.com"));
+        assertNotNull(account.getEmailCheckToken()); // email check token Null이어서 오류가 났다. 이에 테스트 코드를 추가한다.
 
         // SimpleMailMessage 타입의 센더가 호출 되었는지만 확인
         // 메일 내용까지 확인할 필요는 없음

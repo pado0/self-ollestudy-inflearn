@@ -6,6 +6,7 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.validation.Valid;
 
@@ -20,6 +21,7 @@ public class AccountService {
     private final PasswordEncoder passwordEncoder;
 
     // signup 코드 빌더 별도의 메소드로 분리. 리팩토링하여 컨트롤러 메소드 내 코드 줄이기.
+    // 이 안에서는 트랜잭션이 돌아 잘 저장된다.
     private Account saveNewAccount(@Valid SignUpForm signUpForm) {
         Account account = Account.builder()
                 .email(signUpForm.getEmail())
@@ -45,10 +47,14 @@ public class AccountService {
     }
 
     // 이 코드만 컨트롤러에서 가져다가 쓴다.
+    // 여기에서 email checkToken을 저장해줘야 한다. null이 리턴되고있음.
+    // 메일인증 오류: saveNewAccount로 저장한 객체가 detatched 객체 (트랜잭션이 끝났음) 이라서, generate한 토큰이 세팅되지 않고있었음.
+    // @Transactional 을 붙여서 처리
+    @Transactional
     public void processNewAccount(SignUpForm signUpForm) {
         // 회원 저장
         Account newAccount = saveNewAccount(signUpForm);
-        // 메일을 인증하는 토큰값 생성
+        // 메일을 인증하는 토큰값 생성 후 세팅.
         newAccount.generateEmailCheckToken();
         // 메일 보내기
         sendSignUpConfirmEmail(newAccount);
