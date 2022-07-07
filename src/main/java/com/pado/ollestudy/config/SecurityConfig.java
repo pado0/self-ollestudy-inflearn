@@ -1,8 +1,10 @@
 package com.pado.ollestudy.config;
 
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 
@@ -18,5 +20,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .mvcMatchers(HttpMethod.GET, "/profile/*").permitAll() //프로필 요청은 get만 허용
                 .anyRequest().authenticated(); // 나머지는 로그인을 해야 쓸 수 있다.
 
+    }
+
+    // 스프링 시큐리티로 인해 뷰에서 로고 이미지가 불러와 지지 않는 문제 해결
+    @Override
+    public void configure(WebSecurity web) throws Exception {
+        web.ignoring()
+                .requestMatchers(PathRequest.toStaticResources().atCommonLocations());
     }
 }

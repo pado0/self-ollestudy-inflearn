@@ -10,10 +10,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest // WebEnvironment 설정으로 톰캣 띄워서 테스팅도 가능
+@SpringBootTest // WebEnvironment 설정으로 톰캣 띄워서 테스팅도 가
 @AutoConfigureMockMvc
 class AccountControllerTest {
 
@@ -27,6 +26,8 @@ class AccountControllerTest {
         mockMvc.perform(get("/sign-up"))
                 .andDo(print()) // 응답 프린트 가능
                 .andExpect(status().isOk())
-                .andExpect(view().name("account/sign-up"));
+                .andExpect(view().name("account/sign-up"))
+                .andExpect(model().attributeExists("signUpForm")); // 뷰에 이 어트리뷰트가 있는지 확
+
     }
 }
