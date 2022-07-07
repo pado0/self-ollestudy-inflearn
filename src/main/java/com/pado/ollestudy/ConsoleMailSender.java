@@ -50,7 +50,7 @@ public class ConsoleMailSender implements JavaMailSender {
     @Override
     public void send(SimpleMailMessage simpleMessage) throws MailException {
         // 가입 후 메일 보낼 때 콘솔창에 메세지 출력
-        log.info(simpleMessage.getText());
+        log.info("mail sender - " + simpleMessage.getText());
 
     }
 
