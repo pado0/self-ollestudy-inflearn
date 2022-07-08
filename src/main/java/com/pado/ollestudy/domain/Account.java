@@ -74,4 +74,9 @@ public class Account {
     public void generateEmailCheckToken() {
         this.emailCheckToken = UUID.randomUUID().toString();
     }
+
+    public void completeSignUp() {
+        this.emailVerified = true; // 정상 인증 state로 변경
+        this.joinedAt = LocalDateTime.now();
+    }
 }

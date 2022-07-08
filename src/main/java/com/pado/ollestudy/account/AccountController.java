@@ -77,9 +77,8 @@ public class AccountController {
             return view;
         }
 
-        // 여기까지 얼리리턴 완료시 정상적으로 인증된 회원임
-        account.setEmailVerified(true); // 인증 정상 state로 처리
-        account.setJoinedAt(LocalDateTime.now());
+        // 여기까지 얼리리턴 완료시 정상적으로 인증된 회원임. account entity 쪽으로 리팩토링
+        account.completeSignUp();
 
         // 뷰에 넘길 회원 수, 닉네임
         model.addAttribute("numberOfUser", accountRepository.count());
