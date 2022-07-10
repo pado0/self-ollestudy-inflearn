@@ -15,12 +15,16 @@ import org.springframework.transaction.annotation.Transactional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.then;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.authenticated;
+import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.unauthenticated;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+// 스프링 시큐티리 적용시 사용 가능한 mock mvc 기능들이 있다.
 @SpringBootTest // WebEnvironment 설정으로 톰캣 띄워서 테스팅도 가
 @AutoConfigureMockMvc
 @Transactional
@@ -44,7 +48,9 @@ class AccountControllerTest {
                         .param("email", "email@emai.com"))
                 .andExpect(status().isOk())
                 .andExpect(model().attributeExists("error"))
-                .andExpect(view().name("account/checked-email")); // 우리가 정한 뷰 이름대로 나오는지 확인
+                .andExpect(view().name("account/checked-email")) // 우리가 정한 뷰 이름대로 나오는지 확인
+                .andExpect(unauthenticated()); // 인증오류가 발생해야함.
+
     }
 
     @DisplayName("인증 메일 확인 - 입력값이 올바른 경우")
@@ -67,7 +73,8 @@ class AccountControllerTest {
                 .andExpect(model().attributeDoesNotExist("error"))
                 .andExpect(model().attributeExists("nickname"))
                 .andExpect(model().attributeExists("numberOfUser"))
-                .andExpect(view().name("account/checked-email")); // 우리가 정한 뷰 이름대로 나오는지 확인
+                .andExpect(view().name("account/checked-email")) // 우리가 정한 뷰 이름대로 나오는지 확인
+                .andExpect(authenticated().withUsername("hyo")); // 인증 완료 상태
     }
 
     //sign-up 시큐리티 필터 해제시 Status expected:<200> but was:<403>
@@ -78,7 +85,8 @@ class AccountControllerTest {
                 .andDo(print()) // 응답 프린트 가능
                 .andExpect(status().isOk())
                 .andExpect(view().name("account/sign-up"))
-                .andExpect(model().attributeExists("signUpForm")); // 뷰에 이 어트리뷰트가 있는지 확
+                .andExpect(model().attributeExists("signUpForm")) // 뷰에 이 어트리뷰트가 있는지 확인
+                .andExpect(unauthenticated());
 
     }
 
@@ -93,7 +101,8 @@ class AccountControllerTest {
                         .param("password", "12345")
                         .with(csrf())) // csrf 인증 오류를 막기 위해 csrf 토큰 넣기
                 .andExpect(status().isOk()) // post응답의 결과가 ok인지. // 스프링 시큐리티를 적용하면 기본적으로 csrf가 활성화됨
-                .andExpect(view().name("account/sign-up")); // 결과가 sign-up으로 이동하면 성공!
+                .andExpect(view().name("account/sign-up")) // 결과가 sign-up으로 이동하면 성공!
+                .andExpect(unauthenticated());
     }
 
     @DisplayName("회원가입 처리 - 입력값 정상")
@@ -105,7 +114,8 @@ class AccountControllerTest {
                         .param("password", "12345678")
                         .with(csrf())) // csrf 인증 오류를 막기 위해 csrf 토큰 넣기
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name("redirect:/"));
+                .andExpect(view().name("redirect:/"))
+                .andExpect(authenticated().withUsername("hyojin"));
 
         Account account = accountRepository.findByEmail("bgshhd95@gmail.com");
         assertNotNull(account); // 가입한 메일 값이 존재하는지 확인

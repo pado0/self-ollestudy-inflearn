@@ -4,11 +4,16 @@ import com.pado.ollestudy.domain.Account;
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.validation.Valid;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -51,12 +56,29 @@ public class AccountService {
     // 메일인증 오류: saveNewAccount로 저장한 객체가 detatched 객체 (트랜잭션이 끝났음) 이라서, generate한 토큰이 세팅되지 않고있었음.
     // @Transactional 을 붙여서 처리
     @Transactional
-    public void processNewAccount(SignUpForm signUpForm) {
+    public Account processNewAccount(SignUpForm signUpForm) {
         // 회원 저장
         Account newAccount = saveNewAccount(signUpForm);
         // 메일을 인증하는 토큰값 생성 후 세팅.
         newAccount.generateEmailCheckToken();
         // 메일 보내기
         sendSignUpConfirmEmail(newAccount);
+
+        return newAccount;
+    }
+
+    public void login(Account account) {
+
+        // auth manager 내부에서 사용해야하는 토큰임. 정석적으로 하려면 사용자 입력 pw 기반으로 AuthticationManager을 통해 로그인 처리를 해야함.
+        // auth manager가 하는 일을 그대로 한다고 생각. 이렇게 하는 이유는, 우리가 인코딩한 Pw밖에 접근을 못하는 상태이기 때문.
+        // 사용자가 입력한 평문 pw에 접근할 수 없음. 접근하려면 db에 담아두어야하는게 그렇게 안할거임. 이메일 체크 api에서도 평문 pw가 필요한데, db에서 읽어올 수 없으니 그냥 아래처럼 코딩한다.
+        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(
+                account.getNickname(), // principal 설정. principal은 시스템을 사용하려하는 사용자를 의
+                account.getPassword(),
+                List.of(new SimpleGrantedAuthority("ROLE_USER")));
+
+        // 컨텍스트 홀더를 통해 로그인 처리
+        SecurityContext context = SecurityContextHolder.getContext(); // 컨텍스트 홀더가 컨텍스트를 들고있음.
+        context.setAuthentication(token); // 이 컨텍스트에 인증을 세팅해줌. 정석적인 방법은 아니지만 지금 상황에서 최선
     }
 }

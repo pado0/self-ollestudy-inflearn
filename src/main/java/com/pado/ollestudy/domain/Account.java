@@ -79,4 +79,8 @@ public class Account {
         this.emailVerified = true; // 정상 인증 state로 변경
         this.joinedAt = LocalDateTime.now();
     }
+
+    public boolean isValidToken(String token) {
+        return this.emailCheckToken.equals(token);
+    }
 }

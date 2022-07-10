@@ -51,8 +51,8 @@ public class AccountController {
 
         // 회원 가입 프로세스 (회원 가입정보 저장, 이메일 보내기)
         // 컨트롤러는 새 회원을 처리하는 서비스만 호출하고, 서비스에서 이메일 보내는처리. 컨트롤러는 알 필요 없다.
-        accountService.processNewAccount(signUpForm);
-
+        Account account = accountService.processNewAccount(signUpForm);
+        accountService.login(account);
         return "redirect:/";
     }
 
@@ -71,15 +71,15 @@ public class AccountController {
             return view;
         }
 
-        // 토큰이 유효한지 확인
-        if(!account.getEmailCheckToken().equals(token)){
+        // 토큰이 유효한지 확인, 코드 읽기가 편치 않아서 추가 리팩토링
+        if(!account.isValidToken(token)){
             model.addAttribute("error", "wrong.token");
             return view;
         }
 
         // 여기까지 얼리리턴 완료시 정상적으로 인증된 회원임. account entity 쪽으로 리팩토링
         account.completeSignUp();
-
+        accountService.login(account); // 로그인처리
         // 뷰에 넘길 회원 수, 닉네임
         model.addAttribute("numberOfUser", accountRepository.count());
         model.addAttribute("nickname", account.getNickname());
