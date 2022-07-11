@@ -2,6 +2,7 @@ plugins {
 	id 'org.springframework.boot' version '2.7.1'
 	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
 	id 'java'
+	id "com.github.node-gradle.node" version "3.3.0"
 }
 
 group = 'com.pado'
@@ -14,9 +15,27 @@ configurations {
 	}
 }
 
+
 repositories {
 	mavenCentral()
 }
+
+// springboot 빌드시 package.json에 정의된 프론트엔드 라이브러리도 같이 설치하도록 설정
+node {
+	version = '16.14.0'
+	download = true
+	nodeModulesDir = file("${projectDir}/src/main/resources/static")
+}
+
+task copyFrontLib(type: Copy) {
+	from "${projectDir}/src/main/resources/static"
+	into "${projectDir}/build/resources/main/static/."
+}
+
+copyFrontLib.dependsOn npmInstall
+compileJava.dependsOn copyFrontLib
+
+///////////////////////////////////////////////
 
 dependencies {
 	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity5'

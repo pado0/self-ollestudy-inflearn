@@ -35,3 +35,7 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### NPM 을 버전관리 하지 않도록###
+src/main/resources/static/node_modules
+src/main/resources/static/node
