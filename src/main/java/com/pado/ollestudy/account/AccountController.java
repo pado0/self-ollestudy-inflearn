@@ -1,6 +1,7 @@
 package com.pado.ollestudy.account;
 
 import com.pado.ollestudy.domain.Account;
+import com.pado.ollestudy.main.CurrentUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -53,6 +54,8 @@ public class AccountController {
         // 컨트롤러는 새 회원을 처리하는 서비스만 호출하고, 서비스에서 이메일 보내는처리. 컨트롤러는 알 필요 없다.
         Account account = accountService.processNewAccount(signUpForm);
         accountService.login(account);
+
+        // post한 뒤 새로고침 하더라도 폼 재전송이 일어나지 않도록 리다이렉트.
         return "redirect:/";
     }
 
@@ -86,5 +89,28 @@ public class AccountController {
 
         return view;
     }
+
+    @GetMapping("/check-email")
+    public String uncheckedEmail(@CurrentUser Account account, Model model){
+
+        model.addAttribute("email", account.getEmail());
+        return "account/check-email";
+    }
+
+    @GetMapping("/resend-confirm-email")
+    public String resendEmail(@CurrentUser Account account, Model model) {
+
+        if(!account.canSendConfirmEmail()){
+            model.addAttribute("error", "인증 메일은 5분에 한 번만 전송할 수 있습니다.");
+            model.addAttribute("email", account.getEmail());
+            return "account/check-email";
+        }
+
+        accountService.resendSignUpConfirmEmail(account);
+
+        // 새로고침하면 의도치 않게 메일을 계속 다시 보낼 수 있으므로 메일 전송 완료 후 리다이렉트
+        return "redirect:/";
+    }
+
 
 }
