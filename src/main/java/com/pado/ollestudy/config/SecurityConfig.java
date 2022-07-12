@@ -21,6 +21,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .mvcMatchers(HttpMethod.GET, "/profile/*").permitAll() //프로필 요청은 get만 허용
                 .anyRequest().authenticated(); // 나머지는 로그인을 해야 쓸 수 있다.
 
+        http.formLogin()
+                .loginPage("/login") // 커스텀 로그인 폼 경로
+                .permitAll(); // 로그인 폼에 접근할 수 있는 사용자는 전체
+
+        http.logout() // 기본적으로 로그아웃이 켜져있다.
+                .logoutSuccessUrl("/"); // 로그아웃하고 어디로 갈지만 지정.
     }
 
     // 스프링 시큐리티로 인해 뷰에서 로고 이미지가 불러와 지지 않는 문제 해결

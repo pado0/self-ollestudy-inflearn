@@ -8,6 +8,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +20,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class AccountService {
+public class AccountService implements UserDetailsService {
     private final AccountRepository accountRepository;
 
     // 우선 consoleMailSender를 주입받음
@@ -68,7 +71,7 @@ public class AccountService {
     }
 
     @Transactional
-    public void resendSignUpConfirmEmail(Account account){
+    public void resendSignUpConfirmEmail(Account account) {
         account.generateEmailCheckToken(); // 변경감지 토큰 갱신
         sendSignUpConfirmEmail(account); // 메일전송
     }
@@ -86,5 +89,18 @@ public class AccountService {
         // 컨텍스트 홀더를 통해 로그인 처리
         SecurityContext context = SecurityContextHolder.getContext(); // 컨텍스트 홀더가 컨텍스트를 들고있음.
         context.setAuthentication(token); // 이 컨텍스트에 인증을 세팅해줌. 정석적인 방법은 아니지만 지금 상황에서 최선
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String emailOrNickname) throws UsernameNotFoundException {
+        Account account = accountRepository.findByEmail(emailOrNickname);
+        if (account == null) {
+            account = accountRepository.findByNickname(emailOrNickname);
+        }
+        if (account == null) {
+            throw new UsernameNotFoundException(emailOrNickname);
+        }
+
+        return new UserAccount(account); // 우리가 만든 principal을 리턴
     }
 }
